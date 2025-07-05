@@ -5,7 +5,9 @@ import fragmentShaderText from '/src/test.glsl?raw'
 const canvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
 const renderer = new CanvasRenderer(canvas, fragmentShaderText);
 
-const statsDiv = document.getElementById('stats') as HTMLDivElement;
+const statsBl = document.getElementById('stats-bl') as HTMLDivElement;
+const statsBr = document.getElementById('stats-br') as HTMLDivElement;
 renderer.animator.subscribe(current => {
-    statsDiv.textContent = Utils.formatWithSignificantDigits(current.zoom, 2) + '×';
+    statsBl.textContent = current.x + ',' + current.y;
+    statsBr.textContent = Utils.formatWithSignificantDigits(current.zoom, 2) + '×';
 });

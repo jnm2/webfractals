@@ -10,11 +10,18 @@ body {
     position: fixed;
 }
 
-#stats {
+#stats-bl, #stats-br {
     position: fixed;
     bottom: 0.6em;
-    right: 0.7em;
     color: white;
     text-shadow: black 0 0 4px;
     font-size: 20px;
+}
+
+#stats-bl {
+    left: 0.7em;
+}
+
+#stats-br {
+    right: 0.7em;
 }
