@@ -12,11 +12,13 @@ export class CanvasRenderer {
     readonly #offsetUniform: WebGLUniformLocation;
     readonly #scaleUniform: WebGLUniformLocation;
     readonly #shadingModeUniform: WebGLUniformLocation;
+
     readonly animator = new ZoomPanAnimator()
 
     supersamplingFactor: number = 1;
     shadingMode: ShadingMode = ShadingMode.Smooth;
     #pixelSize?: { width: number; height: number; };
+    #dragStartOffset: { pixelLocation: { x: number; y: number }, viewportCenter: { x: number; y: number } } | null = null;
 
     constructor(canvas: HTMLCanvasElement, fragmentShaderText: string) {
         this.#canvas = canvas;
@@ -61,6 +63,8 @@ export class CanvasRenderer {
 
         canvas.addEventListener('wheel', this.#onmousewheel.bind(this));
         canvas.addEventListener('mousemove', this.#onmousemove.bind(this));
+        canvas.addEventListener('pointerdown', this.#onpointerdown.bind(this));
+        canvas.addEventListener('pointerup', this.#onpointerup.bind(this));
     }
 
     #setCanvasSize() {
@@ -82,9 +86,36 @@ export class CanvasRenderer {
     }
 
     #onmousemove(event: MouseEvent) {
+        if (this.#dragStartOffset) {
+            const scale = this.#getPixelToSceneScale();
+
+            this.animator.resetPosition(
+                this.#dragStartOffset.viewportCenter.x + (event.clientX - this.#dragStartOffset.pixelLocation.x) * window.devicePixelRatio * -scale.x,
+                this.#dragStartOffset.viewportCenter.y + (event.clientY - this.#dragStartOffset.pixelLocation.y) * window.devicePixelRatio * scale.y);
+        }
+
         this.animator.setZoomOrigin(
             ((event.clientX * window.devicePixelRatio) - this.#pixelSize!.width / 2) / this.#pixelSize!.height,
             ((event.clientY * window.devicePixelRatio) - this.#pixelSize!.height / 2) / this.#pixelSize!.height);
+    }
+
+    #onpointerdown(event: PointerEvent) {
+        if (event.button !== 0)
+            return;
+
+        this.#canvas.setPointerCapture(event.pointerId);
+        this.#dragStartOffset = {
+            pixelLocation: { x: event.clientX, y: event.clientY },
+            viewportCenter: { x: this.animator.current.x, y: this.animator.current.y }
+        };
+    }
+
+    #onpointerup(event: PointerEvent) {
+        if (event.button !== 0 || !this.#dragStartOffset)
+            return;
+
+        this.#dragStartOffset = null;
+        this.#canvas.releasePointerCapture(event.pointerId);
     }
 
     #onmousewheel(event: WheelEvent) {
@@ -93,15 +124,19 @@ export class CanvasRenderer {
         this.animator.animateZoom(this.animator.current.zoom * Math.pow(1.4, Math.sign(event.deltaY)));
     }
 
+    #getPixelToSceneScale() {
+        const x = this.animator.current.zoom / this.#pixelSize!.height;
+        return { x, y: -x };
+    }
+
     public draw() {
-        const scaleX = this.animator.current.zoom / this.#pixelSize!.height;
-        const scaleY = -scaleX;
-        this.#context.uniform2f(this.#scaleUniform, scaleX, scaleY);
+        const scale = this.#getPixelToSceneScale();
+        this.#context.uniform2f(this.#scaleUniform, scale.x, scale.y);
 
         this.#context.uniform2f(
             this.#offsetUniform,
-            this.animator.current.x / scaleX - this.#pixelSize!.width / 2,
-            this.animator.current.y / scaleY - this.#pixelSize!.height / 2);
+            this.animator.current.x / scale.x - this.#pixelSize!.width / 2,
+            this.animator.current.y / scale.y - this.#pixelSize!.height / 2);
 
         this.#context.uniform1i(this.#shadingModeUniform, this.shadingMode);
 
