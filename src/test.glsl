@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 uniform vec2 offset;
-uniform vec2 scale;
+uniform float scale;
 
 uniform int shadingMode;
 const int SHADINGMODE_NONE = 0;
@@ -20,8 +20,8 @@ const vec2 roots[4] = vec2[](
 const vec4 palette[4] = vec4[](
     vec4(1.0, 1.0, 0.0, 1.0),
     vec4(0.0, 1.0, 0.0, 1.0),
-    vec4(1.0, 0.0, 0.0, 1.0),
-    vec4(0.0, 0.0, 1.0, 1.0)
+    vec4(0.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 0.0, 0.0, 1.0)
 );
 
 #define cx_mul(a, b) vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x)
@@ -38,8 +38,7 @@ vec2 df(vec2 z) { return cx_mul((4.0 * cx_mul(z, z) + vec2(4.0 / 3.0, 0)), z); }
 float lengthSquared(vec2 v) { return dot(v, v); }
 
 void main() {
-    float rootPrecision = min(scale.x, scale.y);
-
+    float rootPrecision = scale;
     vec2 z = (gl_FragCoord.xy + offset) * scale;
 
     int rootIndex = -1;

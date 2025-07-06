@@ -87,16 +87,17 @@ export class CanvasRenderer {
 
     #onmousemove(event: MouseEvent) {
         if (this.#dragStartOffset) {
-            const scale = this.#getPixelToSceneScale();
+            const pixelToSceneScale = this.#getPixelToSceneScale();
+            const mouseCoordsToSceneScale = { x: pixelToSceneScale * window.devicePixelRatio, y: pixelToSceneScale * -window.devicePixelRatio };
 
             this.animator.resetPosition(
-                this.#dragStartOffset.viewportCenter.x + (event.clientX - this.#dragStartOffset.pixelLocation.x) * window.devicePixelRatio * -scale.x,
-                this.#dragStartOffset.viewportCenter.y + (event.clientY - this.#dragStartOffset.pixelLocation.y) * window.devicePixelRatio * scale.y);
+                this.#dragStartOffset.viewportCenter.x - (event.clientX - this.#dragStartOffset.pixelLocation.x) * mouseCoordsToSceneScale.x,
+                this.#dragStartOffset.viewportCenter.y - (event.clientY - this.#dragStartOffset.pixelLocation.y) * mouseCoordsToSceneScale.y);
         }
 
         this.animator.setZoomOrigin(
             ((event.clientX * window.devicePixelRatio) - this.#pixelSize!.width / 2) / this.#pixelSize!.height,
-            ((event.clientY * window.devicePixelRatio) - this.#pixelSize!.height / 2) / this.#pixelSize!.height);
+            ((event.clientY * -window.devicePixelRatio) + this.#pixelSize!.height / 2) / this.#pixelSize!.height);
     }
 
     #onpointerdown(event: PointerEvent) {
@@ -125,18 +126,17 @@ export class CanvasRenderer {
     }
 
     #getPixelToSceneScale() {
-        const x = this.animator.current.zoom / this.#pixelSize!.height;
-        return { x, y: -x };
+        return this.animator.current.zoom / this.#pixelSize!.height;
     }
 
     public draw() {
         const scale = this.#getPixelToSceneScale();
-        this.#context.uniform2f(this.#scaleUniform, scale.x, scale.y);
+        this.#context.uniform1f(this.#scaleUniform, scale);
 
         this.#context.uniform2f(
             this.#offsetUniform,
-            this.animator.current.x / scale.x - this.#pixelSize!.width / 2,
-            this.animator.current.y / scale.y - this.#pixelSize!.height / 2);
+            this.animator.current.x / scale - this.#pixelSize!.width / 2,
+            this.animator.current.y / scale - this.#pixelSize!.height / 2);
 
         this.#context.uniform1i(this.#shadingModeUniform, this.shadingMode);
 
