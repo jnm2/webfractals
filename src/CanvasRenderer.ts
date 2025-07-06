@@ -62,7 +62,7 @@ export class CanvasRenderer {
         this.animator.subscribe(this.draw.bind(this));
 
         canvas.addEventListener('wheel', this.#onmousewheel.bind(this));
-        canvas.addEventListener('mousemove', this.#onmousemove.bind(this));
+        canvas.addEventListener('pointermove', this.#onpointermove.bind(this));
         canvas.addEventListener('pointerdown', this.#onpointerdown.bind(this));
         canvas.addEventListener('pointerup', this.#onpointerup.bind(this));
     }
@@ -85,7 +85,7 @@ export class CanvasRenderer {
         this.draw();
     }
 
-    #onmousemove(event: MouseEvent) {
+    #onpointermove(event: PointerEvent) {
         if (this.#dragStartOffset) {
             const pixelToSceneScale = this.#getPixelToSceneScale();
             const mouseCoordsToSceneScale = { x: pixelToSceneScale * window.devicePixelRatio, y: pixelToSceneScale * -window.devicePixelRatio };
