@@ -1,4 +1,5 @@
 import { ZoomPanAnimator } from "./ZoomPanAnimator";
+import { ZoomPanPointerListener } from "./ZoomPanPointerListener";
 
 export enum ShadingMode {
     None = 0,
@@ -18,7 +19,6 @@ export class CanvasRenderer {
     supersamplingFactor: number = 1;
     shadingMode: ShadingMode = ShadingMode.Smooth;
     #pixelSize?: { width: number; height: number; };
-    #dragStartOffset: { pixelLocation: { x: number; y: number }, viewportCenter: { x: number; y: number } } | null = null;
 
     constructor(canvas: HTMLCanvasElement, fragmentShaderText: string) {
         this.#canvas = canvas;
@@ -63,8 +63,8 @@ export class CanvasRenderer {
 
         canvas.addEventListener('wheel', this.#onmousewheel.bind(this));
         canvas.addEventListener('pointermove', this.#onpointermove.bind(this));
-        canvas.addEventListener('pointerdown', this.#onpointerdown.bind(this));
-        canvas.addEventListener('pointerup', this.#onpointerup.bind(this));
+
+        new ZoomPanPointerListener(canvas).subscribe(this.#onZoomPanChange.bind(this));
     }
 
     #setCanvasSize() {
@@ -86,43 +86,26 @@ export class CanvasRenderer {
     }
 
     #onpointermove(event: PointerEvent) {
-        if (this.#dragStartOffset) {
-            const pixelToSceneScale = this.#getPixelToSceneScale();
-            const mouseCoordsToSceneScale = { x: pixelToSceneScale * window.devicePixelRatio, y: pixelToSceneScale * -window.devicePixelRatio };
-
-            this.animator.resetPosition(
-                this.#dragStartOffset.viewportCenter.x - (event.clientX - this.#dragStartOffset.pixelLocation.x) * mouseCoordsToSceneScale.x,
-                this.#dragStartOffset.viewportCenter.y - (event.clientY - this.#dragStartOffset.pixelLocation.y) * mouseCoordsToSceneScale.y);
-        }
-
         this.animator.setZoomOrigin(
             ((event.clientX * window.devicePixelRatio) - this.#pixelSize!.width / 2) / this.#pixelSize!.height,
             ((event.clientY * -window.devicePixelRatio) + this.#pixelSize!.height / 2) / this.#pixelSize!.height);
-    }
-
-    #onpointerdown(event: PointerEvent) {
-        if (event.button !== 0)
-            return;
-
-        this.#canvas.setPointerCapture(event.pointerId);
-        this.#dragStartOffset = {
-            pixelLocation: { x: event.clientX, y: event.clientY },
-            viewportCenter: { x: this.animator.current.x, y: this.animator.current.y }
-        };
-    }
-
-    #onpointerup(event: PointerEvent) {
-        if (event.button !== 0 || !this.#dragStartOffset)
-            return;
-
-        this.#dragStartOffset = null;
-        this.#canvas.releasePointerCapture(event.pointerId);
     }
 
     #onmousewheel(event: WheelEvent) {
         if (event.ctrlKey) return; // User is trying to zoom the UI
 
         this.animator.animateZoom(this.animator.current.zoom * Math.pow(1.4, Math.sign(event.deltaY)));
+    }
+
+    #onZoomPanChange(event: { zoomChangeFactor: number; xChange: number; yChange: number; }) {
+        if (event.zoomChangeFactor !== 1)
+            this.animator.resetZoom(this.animator.target.zoom / event.zoomChangeFactor);
+
+        const pixelToSceneScale = this.#getPixelToSceneScale();
+
+        this.animator.resetPosition(
+            this.animator.current.x - event.xChange * window.devicePixelRatio * pixelToSceneScale,
+            this.animator.current.y - event.yChange * -window.devicePixelRatio * pixelToSceneScale);
     }
 
     #getPixelToSceneScale() {

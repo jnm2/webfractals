@@ -9,6 +9,10 @@ export class ZoomPanAnimator {
         return { ...this.#current };
     }
 
+    get target() {
+        return { ...this.#target };
+    }
+
     subscribe(callback: (current: { zoom: number; x: number; y: number; }) => void) {
         this.#subscribers.push(callback);
         callback({ ...this.#current });
