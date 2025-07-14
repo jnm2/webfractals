@@ -6,6 +6,7 @@ export class ZoomPanPointerListener {
     constructor(element: HTMLElement) {
         element.addEventListener('pointerdown', this.#onPointerDown.bind(this));
         element.addEventListener('pointerup', this.#onPointerUp.bind(this));
+        element.addEventListener('pointercancel', this.#onPointerUp.bind(this));
         element.addEventListener('pointermove', this.#onPointerMove.bind(this));
     }
 
