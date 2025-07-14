@@ -38,7 +38,7 @@ vec2 df(vec2 z) { return cx_mul((4.0 * cx_mul(z, z) + vec2(4.0 / 3.0, 0)), z); }
 float lengthSquared(vec2 v) { return dot(v, v); }
 
 void main() {
-    float rootPrecision = scale;
+    float rootPrecision = 0.001;
     vec2 z = (gl_FragCoord.xy + offset) * scale;
 
     int rootIndex = -1;
