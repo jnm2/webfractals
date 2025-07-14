@@ -27,20 +27,18 @@ export class ZoomPanAnimator {
     resetZoom(zoom: number) {
         this.#current.zoom = zoom;
         this.#target.zoom = zoom;
-        this.#cancelFrame();
-        this.#notifySubscribers();
+        this.#scheduleFrame(true);
     }
 
     animateZoom(zoom: number) {
         this.#target.zoom = zoom;
-        this.#animate();
+        this.#scheduleFrame(false);
     }
 
     resetPosition(x: number, y: number) {
         this.#current.x = x;
         this.#current.y = y;
-        this.#cancelFrame();
-        this.#notifySubscribers();
+        this.#scheduleFrame(true);
     }
 
     setZoomOrigin(x: number, y: number) {
@@ -49,13 +47,11 @@ export class ZoomPanAnimator {
     }
 
     #animate() {
-        this.#cancelFrame();
-
         let newZoom;
         const animationStepFactor = Math.pow(this.#target.zoom / this.#current.zoom, 0.1);
         if (animationStepFactor > 1.000001 || animationStepFactor < 0.99999) {
             newZoom = this.#current.zoom * animationStepFactor;
-            this.#scheduleFrame();
+            this.#scheduleFrame(false);
         } else {
             newZoom = this.#target.zoom;
         }
@@ -67,19 +63,15 @@ export class ZoomPanAnimator {
         this.#notifySubscribers();
     }
 
-    #scheduleFrame() {
+    #scheduleFrame(resetOnNextFrame: boolean) {
         if (this.#scheduledFrame === null) {
             this.#scheduledFrame = window.requestAnimationFrame(() => {
                 this.#scheduledFrame = null;
-                return this.#animate();
+                if (resetOnNextFrame)
+                    this.#notifySubscribers();
+                else
+                    this.#animate();
             });
-        }
-    }
-
-    #cancelFrame() {
-        if (this.#scheduledFrame !== null) {
-            window.cancelAnimationFrame(this.#scheduledFrame);
-            this.#scheduledFrame = null;
         }
     }
 }
