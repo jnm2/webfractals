@@ -104,8 +104,8 @@ export class CanvasRenderer {
         const pixelToSceneScale = this.#getPixelToSceneScale();
 
         this.animator.resetPosition(
-            this.animator.current.x - event.xChange * window.devicePixelRatio * pixelToSceneScale,
-            this.animator.current.y - event.yChange * -window.devicePixelRatio * pixelToSceneScale);
+            this.animator.current.x - (event.xChange * window.devicePixelRatio + (event.zoomChangeFactor - 1) * this.#pixelSize!.width / 2) * pixelToSceneScale,
+            this.animator.current.y - -(event.yChange * window.devicePixelRatio + (event.zoomChangeFactor - 1) * this.#pixelSize!.height / 2) * pixelToSceneScale);
     }
 
     #getPixelToSceneScale() {
