@@ -99,7 +99,7 @@ export class CanvasRenderer {
 
     #onZoomPanChange(event: { zoomChangeFactor: number; xChange: number; yChange: number; }) {
         if (event.zoomChangeFactor !== 1)
-            this.animator.resetZoom(this.animator.target.zoom / event.zoomChangeFactor);
+            this.animator.resetZoom(this.animator.current.zoom / event.zoomChangeFactor);
 
         const pixelToSceneScale = this.#getPixelToSceneScale();
 
