@@ -1,7 +1,15 @@
+export class ZoomPanEvent {
+    constructor(
+        readonly scale: number, 
+        readonly translate: { readonly x: number, readonly y: number })
+    {        
+    }
+}
+
 export class ZoomPanPointerListener {
     readonly #downPointers = new Map<number, { x: number; y: number; }>();
     #midpoint: { x: number; y: number; rmsDistance: number; } | null = null;
-    #subscribers = new Array<((event: { zoomChangeFactor: number; xChange: number; yChange: number; }) => void)>();
+    #subscribers = new Array<((event: ZoomPanEvent) => void)>();
 
     constructor(element: HTMLElement) {
         element.addEventListener('pointerdown', this.#onPointerDown.bind(this));
@@ -10,11 +18,11 @@ export class ZoomPanPointerListener {
         element.addEventListener('pointermove', this.#onPointerMove.bind(this));
     }
 
-    subscribe(callback: (event: { zoomChangeFactor: number; xChange: number; yChange: number; }) => void) {
+    subscribe(callback: (event: ZoomPanEvent) => void) {
         this.#subscribers.push(callback);
     }
 
-    #notifySubscribers(event: { zoomChangeFactor: number; xChange: number; yChange: number; }) {
+    #notifySubscribers(event: ZoomPanEvent) {
         for (const subscriber of this.#subscribers) {
             subscriber({ ...event });
         }
@@ -96,10 +104,11 @@ export class ZoomPanPointerListener {
         // the pixel offset that, applied after scaling about (0, 0), reproduces the gesture. Equivalently, it's where (0, 0)
         // ends up.
 
-        this.#notifySubscribers({
+        this.#notifySubscribers(new ZoomPanEvent(
             zoomChangeFactor,
-            xChange: this.#midpoint.x - zoomChangeFactor * oldMidpoint.x,
-            yChange: this.#midpoint.y - zoomChangeFactor * oldMidpoint.y
-        });
+            {
+                x: this.#midpoint.x - zoomChangeFactor * oldMidpoint.x, 
+                y: this.#midpoint.y - zoomChangeFactor * oldMidpoint.y
+            }));
     }
 }

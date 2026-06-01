@@ -1,5 +1,5 @@
 import { ZoomPanAnimator } from "./ZoomPanAnimator";
-import { ZoomPanPointerListener } from "./ZoomPanPointerListener";
+import { ZoomPanEvent, ZoomPanPointerListener } from "./ZoomPanPointerListener";
 
 export enum ShadingMode {
     None = 0,
@@ -97,15 +97,15 @@ export class CanvasRenderer {
         this.animator.animateZoom(this.animator.current.zoom * Math.pow(1.4, Math.sign(event.deltaY)));
     }
 
-    #onZoomPanChange(event: { zoomChangeFactor: number; xChange: number; yChange: number; }) {
-        if (event.zoomChangeFactor !== 1)
-            this.animator.resetZoom(this.animator.current.zoom / event.zoomChangeFactor);
+    #onZoomPanChange(event: ZoomPanEvent) {
+        if (event.scale !== 1)
+            this.animator.resetZoom(this.animator.current.zoom / event.scale);
 
         const pixelToSceneScale = this.#getPixelToSceneScale();
 
         this.animator.resetPosition(
-            this.animator.current.x - (event.xChange * window.devicePixelRatio + (event.zoomChangeFactor - 1) * this.#pixelSize!.width / 2) * pixelToSceneScale,
-            this.animator.current.y - -(event.yChange * window.devicePixelRatio + (event.zoomChangeFactor - 1) * this.#pixelSize!.height / 2) * pixelToSceneScale);
+            this.animator.current.x - (event.translate.x * window.devicePixelRatio + (event.scale - 1) * this.#pixelSize!.width / 2) * pixelToSceneScale,
+            this.animator.current.y - -(event.translate.y * window.devicePixelRatio + (event.scale - 1) * this.#pixelSize!.height / 2) * pixelToSceneScale);
     }
 
     #getPixelToSceneScale() {
