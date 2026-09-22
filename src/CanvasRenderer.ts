@@ -92,8 +92,6 @@ export class CanvasRenderer {
     }
 
     #onmousewheel(event: WheelEvent) {
-        if (event.ctrlKey) return; // User is trying to zoom the UI
-
         this.animator.animateZoom(this.animator.current.zoom * Math.pow(1.4, Math.sign(event.deltaY)));
     }
 
