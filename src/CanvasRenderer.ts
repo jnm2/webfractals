@@ -61,7 +61,7 @@ export class CanvasRenderer {
         this.animator.resetZoom(2);
         this.animator.subscribe(this.draw.bind(this));
 
-        canvas.addEventListener('wheel', this.#onmousewheel.bind(this));
+        canvas.addEventListener('wheel', this.#onmousewheel.bind(this), { passive: false });
         canvas.addEventListener('pointermove', this.#onpointermove.bind(this));
 
         new ZoomPanPointerListener(canvas).subscribe(this.#onZoomPanChange.bind(this));
@@ -92,6 +92,7 @@ export class CanvasRenderer {
     }
 
     #onmousewheel(event: WheelEvent) {
+        event.preventDefault();
         this.animator.animateZoom(this.animator.current.zoom * Math.pow(1.4, Math.sign(event.deltaY)));
     }
 
